@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        const apiKey = '[PUT YOUR API KEY HERE]';
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape Canvas</title>
+    <style>
+        #jsonDisplay {
+            white-space: pre-wrap;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="shapeCanvas" width="1000" height="400" style="border:1px solid #000000;"></canvas>
+    <br>
+    <label for="userRequest">User Request:</label>
+    <input type="text" id="userRequest" style="width: 300px;">
+    <button onclick="updateScene()">Submit</button>
+    <h3>Response from ChatGPT:</h3>
+    <div id="responseDisplay"></div>
+    <h3>Updated Scene JSON:</h3>
+    <div id="jsonDisplay"></div>
+
+    <script>
+        let scene = [
+            {"shape": "circle", "radius": 40, "centerX": 100, "centerY": 100, "color": "red"},
+            {"shape": "rectangle", "x1": 400, "y1": 100, "x2": 500, "y2": 150, "color": "blue"},
+            {"shape": "circle", "radius": 50, "centerX": 250, "centerY": 200, "color": "green"},
+            {"shape": "rectangle", "x1": 400, "y1": 300, "x2": 450, "y2": 350, "color": "black"},
+        ];
+
+        function drawScene(scene) {
+            const canvas = document.getElementById('shapeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            scene.forEach(shape => {
+                ctx.fillStyle = shape.color;
+                if (shape.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                } else if (shape.shape === 'rectangle') {
+                    ctx.fillRect(shape.x1, shape.y1, shape.x2 - shape.x1, shape.y2 - shape.y1);
+                }
+            });
+        }
+
+        async function updateScene() {
+            const userRequest = document.getElementById('userRequest').value;
+            const prompt = `
+                I have a JSON schema for shapes in an 1000x400 canvas. The schema includes:
+                - Circles with centerX, centerY, radius, and color.
+                - Rectangles with x1, y1, x2, y2, and color.
+
+                Here is the current scene:
+                ${JSON.stringify(scene, null, 4)}
+
+                User request:
+                ${userRequest}
+
+                Please provide the updated scene as JSON matching exactly the schema of above. I want only the JSON as your answer.
+            `;
+
+            const response = await chatgptInteraction(prompt);
+
+            document.getElementById('responseDisplay').innerText = response;
+
+            scene = JSON.parse(response);
+            document.getElementById('jsonDisplay').innerText = JSON.stringify(scene, null, 4);
+            drawScene(scene);
+        }
+
+        async function chatgptInteraction(prompt) {
+            const apiUrl = 'https://api.openai.com/v1/chat/completions';
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [{role: "user", content: prompt}],
+                    max_tokens: 1500,
+                    temperature: 0.7
+                })
+            });
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+        }
+
+        // Initial drawing of the scene
+        drawScene(scene);
+        document.getElementById('jsonDisplay').innerText = JSON.stringify(scene, null, 4);
+    </script>
+</body>
+</html>
