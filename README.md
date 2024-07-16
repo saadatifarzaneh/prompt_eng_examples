@@ -6,7 +6,7 @@ You need put your api key in ```openai_api_key.txt``` file and run the commands 
 
 ```myenv\Scripts\activate```
 
-```pip install -r requirements```
+```pip install -r requirements.txt```
 
 
 ## shape draw chat bot (```index.html```)
